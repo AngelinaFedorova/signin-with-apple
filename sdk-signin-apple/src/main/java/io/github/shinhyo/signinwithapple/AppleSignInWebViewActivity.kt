@@ -57,6 +57,7 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
         private const val EXTRA_REDIRECT_URI = "redirect_uri"
         private const val EXTRA_NONCE = "nonce"
         private const val EXTRA_RESULT_RECEIVER = "extra_result_receiver"
+        private const val EXTRA_USE_SCOPE_PARAM = "use_scope_param"
 
         // Legacy support
         private const val EXTRA_AUTH_URL = "auth_url"
@@ -69,12 +70,14 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
             clientId: String,
             redirectUri: String,
             nonce: String,
+            useScopeParam: Boolean,
             resultReceiver: ResultReceiver,
         ): Intent {
             return Intent(context, AppleSignInWebViewActivity::class.java).apply {
                 putExtra(EXTRA_CLIENT_ID, clientId)
                 putExtra(EXTRA_REDIRECT_URI, redirectUri)
                 putExtra(EXTRA_NONCE, nonce)
+                putExtra(EXTRA_USE_SCOPE_PARAM, useScopeParam)
                 putExtra(EXTRA_RESULT_RECEIVER, resultReceiver)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -133,10 +136,11 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
         val clientId = intent.getStringExtra(EXTRA_CLIENT_ID)
         val redirectUri = intent.getStringExtra(EXTRA_REDIRECT_URI)
         val nonce = intent.getStringExtra(EXTRA_NONCE)
+        val useScopeParam = intent.getBooleanExtra(EXTRA_USE_SCOPE_PARAM, true)
 
         if (clientId != null && redirectUri != null && nonce != null) {
             // New structure: initialize with configuration
-            viewModel.initializeAppleSignIn(clientId, redirectUri, nonce)
+            viewModel.initializeAppleSignIn(clientId, redirectUri, nonce, useScopeParam)
         }
     }
 

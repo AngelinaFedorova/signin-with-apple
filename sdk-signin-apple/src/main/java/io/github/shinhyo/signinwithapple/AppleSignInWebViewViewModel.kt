@@ -84,6 +84,7 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
         clientId: String,
         redirectUri: String,
         nonce: String,
+        useScopeParam: Boolean
     ) {
         val newConfig = AppleSignInConfig(
             clientId = clientId,
@@ -92,7 +93,7 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
         )
         this.config = newConfig
 
-        val authUrl = buildAuthUrl(newConfig)
+        val authUrl = buildAuthUrl(newConfig, useScopeParam)
         _uiState.value = _uiState.value.copy(authUrl = authUrl)
     }
 
@@ -110,14 +111,18 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
      * Builds Apple OAuth authentication URL
      * https://developer.apple.com/documentation/signinwithapplerestapi/generate_and_validate_tokens
      */
-    internal fun buildAuthUrl(config: AppleSignInConfig): String {
+    internal fun buildAuthUrl(config: AppleSignInConfig, useScopeParam: Boolean = true): String {
         val encodedRedirectUri = URLEncoder.encode(config.redirectUri, "UTF-8")
+        val responseMode = if (useScopeParam) {
+            "&response_mode=form_post&scope=name%20email"
+        } else {
+            "&response_mode=fragment"
+        }
         return "https://appleid.apple.com/auth/authorize" +
                 "?client_id=${config.clientId}" +
                 "&redirect_uri=$encodedRedirectUri" +
                 "&response_type=code%20id_token" +
-                "&response_mode=fragment" +
-                "&scope=name%20email" +
+                responseMode +
                 "&nonce=${config.nonce}" +
                 "&state=${config.state}"
     }

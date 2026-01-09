@@ -53,6 +53,7 @@ object SignInWithApple {
 
     private var serviceId: String? = null
     private var redirectUri: String? = null
+    private var useScopeParam: Boolean = true
 
     /**
      * Cancellable handle for Apple Sign-In operations
@@ -70,12 +71,13 @@ object SignInWithApple {
      * @param redirectUri The redirect URI registered with Apple
      * @throws IllegalArgumentException if serviceId or redirectUri is empty
      */
-    fun init(serviceId: String, redirectUri: String) {
+    fun init(serviceId: String, redirectUri: String, useScopeParam: Boolean = true) {
         require(serviceId.isNotEmpty()) { "Service ID cannot be empty" }
         require(redirectUri.isNotEmpty()) { "Redirect URI cannot be empty" }
 
         this.serviceId = serviceId
         this.redirectUri = redirectUri
+        this.useScopeParam = useScopeParam
     }
 
     /**
@@ -142,6 +144,7 @@ object SignInWithApple {
                 clientId = currentServiceId,
                 redirectUri = currentRedirectUri,
                 nonce = nonce,
+                useScopeParam = useScopeParam,
                 resultReceiver = resultReceiver,
             )
             context.startActivity(intent)
