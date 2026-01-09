@@ -113,12 +113,13 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
     internal fun buildAuthUrl(config: AppleSignInConfig): String {
         val encodedRedirectUri = URLEncoder.encode(config.redirectUri, "UTF-8")
         return "https://appleid.apple.com/auth/authorize" +
-            "?client_id=${config.clientId}" +
-            "&redirect_uri=$encodedRedirectUri" +
-            "&response_type=code%20id_token" +
-            "&response_mode=fragment" +
-            "&nonce=${config.nonce}" +
-            "&state=${config.state}"
+                "?client_id=${config.clientId}" +
+                "&redirect_uri=$encodedRedirectUri" +
+                "&response_type=code%20id_token" +
+                "&response_mode=fragment" +
+                "&scope=name%20email" +
+                "&nonce=${config.nonce}" +
+                "&state=${config.state}"
     }
 
     /**
