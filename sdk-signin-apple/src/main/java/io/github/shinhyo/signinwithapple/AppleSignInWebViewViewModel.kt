@@ -59,6 +59,7 @@ internal data class AppleSignInConfig(
     val redirectUri: String,
     val nonce: String,
     val state: String = UUID.randomUUID().toString(),
+    val tokenRedirectTemplate: String? = null
 )
 
 /**
@@ -84,12 +85,14 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
         clientId: String,
         redirectUri: String,
         nonce: String,
-        useScopeParam: Boolean
+        useScopeParam: Boolean,
+        tokenRedirectTemplate: String?
     ) {
         val newConfig = AppleSignInConfig(
             clientId = clientId,
             redirectUri = redirectUri,
             nonce = nonce,
+            tokenRedirectTemplate = tokenRedirectTemplate
         )
         this.config = newConfig
 
@@ -101,6 +104,8 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
      * Gets the redirect URI from configuration
      */
     fun getRedirectUri(): String? = config?.redirectUri
+
+    fun getTokenRedirectTemplate(): String? = config?.tokenRedirectTemplate
 
     /**
      * Gets the state for validation
@@ -136,6 +141,23 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
             if (fragment != null) {
                 val params = parseQueryParameters(fragment)
                 processAuthenticationResult(params)
+            } else {
+                emitError("Invalid redirect URL format")
+            }
+        } catch (e: Exception) {
+            emitError("Failed to process redirect: ${e.message}")
+        }
+    }
+
+    fun handleTokenRedirectUrl(url: String) {
+        val template = getTokenRedirectTemplate()
+        if (template.isNullOrEmpty()) return
+        try {
+            val index = url.indexOf(template, 0, true)
+            if (index < 0) return
+            val token = url.substring(index + template.length)
+            if (token.isBlank().not()) {
+                handleAuthenticationSuccess(token)
             } else {
                 emitError("Invalid redirect URL format")
             }
@@ -202,6 +224,13 @@ internal class AppleSignInWebViewViewModel() : ViewModel() {
      */
     internal fun handleAuthenticationSuccess(params: Map<String, String>) {
         val resultData = createSuccessData(params)
+
+        _uiState.value = _uiState.value.copy(isSuccess = true)
+        _events.value = AppleSignInEvent.Success(resultData)
+    }
+
+    internal fun handleAuthenticationSuccess(token: String) {
+        val resultData = createSuccessData(mapOf("code" to "200", "id_token" to token))
 
         _uiState.value = _uiState.value.copy(isSuccess = true)
         _events.value = AppleSignInEvent.Success(resultData)

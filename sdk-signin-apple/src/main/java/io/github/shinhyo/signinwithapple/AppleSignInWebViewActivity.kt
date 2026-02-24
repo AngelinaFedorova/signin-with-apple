@@ -58,6 +58,7 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
         private const val EXTRA_NONCE = "nonce"
         private const val EXTRA_RESULT_RECEIVER = "extra_result_receiver"
         private const val EXTRA_USE_SCOPE_PARAM = "use_scope_param"
+        private const val EXTRA_TOKEN_REDIRECT_TEMPLATE = "token_redirect_template"
 
         // Legacy support
         private const val EXTRA_AUTH_URL = "auth_url"
@@ -71,11 +72,13 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
             redirectUri: String,
             nonce: String,
             useScopeParam: Boolean,
+            tokenRedirectTemplate: String?,
             resultReceiver: ResultReceiver,
         ): Intent {
             return Intent(context, AppleSignInWebViewActivity::class.java).apply {
                 putExtra(EXTRA_CLIENT_ID, clientId)
                 putExtra(EXTRA_REDIRECT_URI, redirectUri)
+                putExtra(EXTRA_TOKEN_REDIRECT_TEMPLATE, tokenRedirectTemplate)
                 putExtra(EXTRA_NONCE, nonce)
                 putExtra(EXTRA_USE_SCOPE_PARAM, useScopeParam)
                 putExtra(EXTRA_RESULT_RECEIVER, resultReceiver)
@@ -137,10 +140,11 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
         val redirectUri = intent.getStringExtra(EXTRA_REDIRECT_URI)
         val nonce = intent.getStringExtra(EXTRA_NONCE)
         val useScopeParam = intent.getBooleanExtra(EXTRA_USE_SCOPE_PARAM, true)
+        val tokenRedirectTemplate = intent.getStringExtra(EXTRA_TOKEN_REDIRECT_TEMPLATE)?.ifEmpty { null }
 
         if (clientId != null && redirectUri != null && nonce != null) {
             // New structure: initialize with configuration
-            viewModel.initializeAppleSignIn(clientId, redirectUri, nonce, useScopeParam)
+            viewModel.initializeAppleSignIn(clientId, redirectUri, nonce, useScopeParam, tokenRedirectTemplate)
         }
     }
 
@@ -166,7 +170,12 @@ internal class AppleSignInWebViewActivity : AppCompatActivity() {
             ): Boolean {
                 val url = request.url.toString()
                 val redirectUri = viewModel.getRedirectUri() ?: SignInWithApple.getRedirectUri()
+                val tokenRedirectTemplate = viewModel.getTokenRedirectTemplate() ?: SignInWithApple.getTokenRedirectTemplate()
 
+                if (tokenRedirectTemplate.isNullOrEmpty().not() && url.contains(tokenRedirectTemplate)) {
+                    viewModel.handleTokenRedirectUrl(url)
+                    return true
+                }
                 if (redirectUri.isEmpty()) {
                     finish() // Gracefully close the activity
                     return false
